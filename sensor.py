@@ -217,13 +217,14 @@ print("SPI setup complete")
 myID = ReadChipID()
 print("Chip ID : " + str(myID))
 
-CfgADC(DGAIN_1, DRATE_100)
+CfgADC(DGAIN_1, DRATE_5)
 
 x=0
 while True:
     while (wp.digitalRead(DrdyPin)==1):
         c=1
     Adc = ISR()    
-    print((Adc * 100) / 167 / 1000000.0)
+    #print((Adc * 100) / 167 / 1000000.0)
+    print ((Adc*2.5)/16777216.0)
     x+=1
     print x
