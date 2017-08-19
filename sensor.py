@@ -13,6 +13,9 @@ CsPin    = 15
 DrdyPin  = 11
 ResetPin = 12
 
+#switches
+J1Pin = 32
+
 # Register Addresses
 REG_STATUS = 0x00
 REG_MUX    = 0x01
@@ -172,7 +175,7 @@ def ReadData():
     return numpy.int32(read)
 
 def ISR():
-    SetChannal(0)
+    SetChannal(1)
     #SetDiffChannal(0)
     wp.delayMicroseconds(5)
 
@@ -219,8 +222,14 @@ print("Chip ID : " + str(myID))
 
 CfgADC(DGAIN_1, DRATE_5)
 
+#switches
+wp.pinMode(J1Pin, wp.OUTPUT)
+wp.digitalWrite(J1Pin, wp.LOW)
+
+
+
 x=0
-while True:
+while (x<=200):
     while (wp.digitalRead(DrdyPin)==1):
         c=1
     Adc = ISR()    
@@ -228,3 +237,4 @@ while True:
     print ((Adc*2.5)/16777216.0)
     x+=1
     print x
+wp.digitalWrite(J1Pin, wp.HIGH)

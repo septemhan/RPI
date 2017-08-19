@@ -48,9 +48,13 @@ spi.lsbfirst = True
 
 #define	SPICS	RPI_GPIO_P1_16	//P4
 SPICS    = 16
+RES1PIN = 29
+RES2PIN = 31
 
 wp.wiringPiSetupPhys()
 wp.pinMode(SPICS, wp.OUTPUT)
+wp.pinMode(RES1PIN, wp.OUTPUT)
+wp.pinMode(RES2PIN, wp.OUTPUT)
 
 def CS_1():
     wp.digitalWrite(SPICS, wp.HIGH)
@@ -106,13 +110,16 @@ def test_dac8553():
 def test_voltage(_voltage,_duration):
     start_time = time.time()
     now = time.time()
-    data = Voltage_Convert(5.0,_voltage)
+    data = Voltage_Convert(3.000,_voltage)
     while (now-start_time<=_duration):
         Write_DAC8532(0x30,data)
         now = time.time()
         print now-start_time
     Write_DAC8532(0x30,0)
-        
+
+
+wp.digitalWrite(RES1PIN, wp.LOW)
+wp.digitalWrite(RES2PIN, wp.LOW)
 #test_dac8553()
-test_voltage(2.999,20) 
+test_voltage(2.024,600) 
 
