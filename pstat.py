@@ -2,8 +2,7 @@ import numpy
 #from obspy.core import Trace,Stream,UTCDateTime
 import Queue
 from threading import Thread
-import os.path
-import subprocess
+import time
 import wiringpi as wp
 import spidev
 spi = spidev.SpiDev()
