@@ -16,8 +16,11 @@ SPICS    = 16
 
 #switches
 J1Pin = 32
-RES1PIN = 29
-RES2PIN = 31
+RES11PIN = 29
+RES21PIN = 31
+RES12PIN = 33
+RES22PIN = 35
+
 
 #DAC address
 channel_A =  0x30
@@ -95,8 +98,10 @@ def StartGPIO():
     wp.digitalWrite(ResetPin, wp.HIGH)
 
     wp.pinMode(SPICS, wp.OUTPUT)
-    wp.pinMode(RES1PIN, wp.OUTPUT)
-    wp.pinMode(RES2PIN, wp.OUTPUT)
+    wp.pinMode(RES11PIN, wp.OUTPUT)
+    wp.pinMode(RES12PIN, wp.OUTPUT)
+    wp.pinMode(RES21PIN, wp.OUTPUT)
+    wp.pinMode(RES22PIN, wp.OUTPUT)
 
 def CS_1():
     wp.digitalWrite(SPICS, wp.HIGH)
@@ -270,14 +275,14 @@ def EC_test():
     wp.digitalWrite(J1Pin, wp.HIGH)
 
 
-def ISE_test():
+def ISE_test(_ch):
     x=0
     while (x<=200):
         while (wp.digitalRead(DrdyPin)==1):
             c=1
-        Adc = ISR()   #ch1 is for EC module 
+        Adc = ISR(_ch)   #ch1 is for EC module 
         #print((Adc * 100) / 167 / 1000000.0)
-        print ((Adc*2.5)/16777216.0)
+        print ((Adc*3.000)/16777216.0)
         x+=1
 
 def test_voltage(_voltage,_duration):
@@ -290,7 +295,80 @@ def test_voltage(_voltage,_duration):
         print now-start_time
     Write_DAC8532(0x30,0)
 
+def test_pstas_1(_voltage,_duration,_resolution):
+    print "setting resultion"
+    if (_resolution==1): #100k
+        wp.digitalWrite(RES11PIN, wp.LOW)
+        wp.digitalWrite(RES21PIN, wp.LOW)
+        print "res =1X"
+    elif (_resolution==2):#1M
+        wp.digitalWrite(RES11PIN, wp.HIGH)
+        wp.digitalWrite(RES21PIN, wp.LOW)
+        print "res =10X"
+    elif (_resolution==3):#10M
+        wp.digitalWrite(RES11PIN, wp.LOW)
+        wp.digitalWrite(RES21PIN, wp.HIGH)
+        print "res =100X"
+    elif (_resolution==4):#100M
+        wp.digitalWrite(RES11PIN, wp.HIGH)
+        wp.digitalWrite(RES21PIN, wp.HIGH)
+        print "res =1000X"
 
-wp.digitalWrite(RES1PIN, wp.LOW)
-wp.digitalWrite(RES2PIN, wp.LOW)
-test_voltage(2.024,600) 
+    print "resolution setting completed"
+
+    
+    start_time = time.time()
+    now = time.time()
+    data = Voltage_Convert(3.000,_voltage)
+    while (now-start_time<=_duration):
+        Write_DAC8532(0x30,data)
+        while (wp.digitalRead(DrdyPin)==1):pass
+        Adc = ISR(7)   #ch7 is for PS1 ch0 is forPS2 
+        #I = ((Adc * 100) / 167 / 1000000.0)
+        I =  ((Adc*3.0)/16777216.0)
+        now = time.time()
+        print int(now-start_time),I, '\n'
+    #Write_DAC8532(0x30,0)
+
+def test_pstas_2(_voltage,_duration,_resolution):
+    print "setting resultion"
+    if (_resolution==1): #100
+        wp.digitalWrite(RES12PIN, wp.LOW)
+        wp.digitalWrite(RES22PIN, wp.LOW)
+        print "res =1X"
+    elif (_resolution==2):#1k
+        wp.digitalWrite(RES12PIN, wp.HIGH)
+        wp.digitalWrite(RES22PIN, wp.LOW)
+        print "res =10X"
+    elif (_resolution==3):#10k
+        wp.digitalWrite(RES12PIN, wp.LOW)
+        wp.digitalWrite(RES22PIN, wp.HIGH)
+        print "res =100X"
+    elif (_resolution==4):#100k
+        wp.digitalWrite(RES12PIN, wp.HIGH)
+        wp.digitalWrite(RES22PIN, wp.HIGH)
+        print "res =1000X"
+
+    print "resolution setting completed"
+
+    
+    start_time = time.time()
+    now = time.time()
+    data = Voltage_Convert(3.000,_voltage)
+    while (now-start_time<=_duration):
+        Write_DAC8532(0x34,data)
+        while (wp.digitalRead(DrdyPin)==1):pass
+        Adc = ISR(0)   #ch7 is for PS1 ch0 is forPS2 
+        I = ((Adc * 100) / 167 / 1000000.0)
+        #I =  ((Adc*2.5)/16777216.0)
+        now = time.time()
+        print int(now-start_time),I, '\n'
+    #Write_DAC8532(0x30,0)
+
+#wp.digitalWrite(RES1PIN, wp.LOW)
+#wp.digitalWrite(RES2PIN, wp.HIGH)
+
+#test_pstas_2(1.524,360,4)
+test_pstas_1(2.024,360,4)
+#test_voltage(1.024,120)
+#ISE_test(2)
