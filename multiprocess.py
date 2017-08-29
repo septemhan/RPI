@@ -1,7 +1,7 @@
 import numpy
 #from obspy.core import Trace,Stream,UTCDateTime
 import Queue
-from threading import Thread
+import threading 
 import time
 import wiringpi as wp
 import spidev
@@ -381,38 +381,48 @@ def test_pstas_2(_voltage,_duration,_resolution):
 #test_voltage(1.024,120)
 #ISE_test(2)
 
-def var(l):
-    s1=0
-    s2=0
-    for i in l:
-        s1+=i**2
-        s2+=i
-    return float(s1)/len(l)-(float(s2)/len(l))**2
-def clean(l,ave):
-    for i in l:
-        if abs(i-ave)/i>=0.15:
-            l.remove(i)
 
-wirte_V = 0.5000000
-filename = "Low_NOISE_test_1"
-tempfile = open(filename,'w')
-CfgADC(DGAIN_1, DRATE_30000)
-#for drate in [DRATE_10,DRATE_100,DRATE_500,DRATE_1000,DRATE_7500,DRATE_30000]:
-for v in [0,0.1,0.2,0.5,0.7,0.9]:
-    #CfgADC(DGAIN_1, drate)
-    wirte_V = v    
-    for i in range(10):            
-        result = []
+On = True
 
-        test_pstas_2(wirte_V+1.024,10,1)
-        a = sum(result)/len(result)
-        #result = clean(result,ave)
+def doISR():
+    while (On==True):
+        while (wp.digitalRead(DrdyPin)==1):
+            c=1
+        Adc = ISR(0)   #ch1 is for EC module 
+        #print((Adc * 100 ) / 167 / 1000000.0)
+        I = ((Adc*12.000)/16777216.0)
+        print I
 
-        ave = sum(result)/len(result)
-        std = math.sqrt(var(result))
-        rsd = std/ave
+def dowork():
+    print '111'
 
-        lineTowirte = str(i)+","+str(ave)+","+str(std)+","+str(rsd)+"\n"
-        tempfile.write(lineTowirte)
 
-tempfile.close()
+class adc_thread(threading.Thread):
+    def __init__(self,th_id,name):
+        threading.Thread.__init__(self)
+        self.id = th_id
+        self.name = name
+
+    def run(self):
+        #doISR()
+        dowork()
+
+
+
+wp.digitalWrite(RES12PIN, wp.LOW)
+wp.digitalWrite(RES22PIN, wp.LOW)
+CfgADC(DGAIN_1, DRATE_10)
+
+
+t_adc = adc_thread(1,'adc1')
+t_adc.start()
+
+for i in range(5):
+    write_V = i*0.05+1.024
+    data = Voltage_Convert(3.000,write_V)
+    Write_DAC8532(0x34,data)
+    print "write v ", write_V-1.024
+    time.sleep(10)
+    
+    
+On = False
