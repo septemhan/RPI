@@ -19,7 +19,8 @@ class MyMplCanvas(FigureCanvas):
         fig = Figure(figsize=(width, height), dpi=dpi)
         self.axes = fig.add_subplot(111)
         # We want the axes cleared every time plot() is called
-        #self.axes.hold(False)
+        #self.axes.autoscale(False)
+        self.axes.set_yscale('linear')
 
         self.compute_initial_figure()
         FigureCanvas.__init__(self, fig)
@@ -39,7 +40,7 @@ class MyDynamicMplCanvas(MyMplCanvas):
         MyMplCanvas.__init__(self, *args, **kwargs)
         timer = QtCore.QTimer(self)
         timer.timeout.connect(self.on_timer)
-        timer.start(1000)
+        timer.start(100)
         self.livefeed = LiveDataFeed()
         self.xydata = []
 
@@ -74,7 +75,7 @@ class MyDynamicMplCanvas(MyMplCanvas):
                         )
             self.livefeed.add_data(data)
         
-    def compute_initial_figureself):
+    def compute_initial_figureself():
         self.axes.plot([0], [0], 'r')
 
     def update_figure(self):
@@ -88,6 +89,7 @@ class MyDynamicMplCanvas(MyMplCanvas):
         # Build a list of 4 random integers between 0 and 10 (both inclusive)
         #l = [random.randint(0, 10) for i in range(4)]
 
+        self.axes.set_ylim(min(ydata),max(ydata))
         self.axes.plot(xdata, ydata, 'r')
         self.draw()
 

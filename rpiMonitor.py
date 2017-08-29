@@ -281,7 +281,7 @@ class ADCMonitor(threading.Thread):
             adc = self.ISR()
             now_ts = time.time()-self.start_ts
             print now_ts, ((adc*12.000)/16777216.0)
-            self.data_q.put((now_ts,adc))
+            self.data_q.put((now_ts,(adc*12.000)/16777216.0))
 
 
     def join(self,_timeout=None):
