@@ -9,6 +9,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
 
+
 class MyMplCanvas(FigureCanvas):
     """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
     def __init__(self, parent=None, width=5, height=4, dpi=100):
@@ -31,12 +32,6 @@ class MyMplCanvas(FigureCanvas):
     def compute_initial_figure(self):
         pass
 
-class MyStaticMplCanvas(MyMplCanvas):
-    """Simple canvas with a sine plot."""
-    def compute_initial_figure(self):
-        t = arange(0.0, 3.0, 0.01)
-        s = sin(2*pi*t)
-        self.axes.plot(t, s)
 
 
 class MyDynamicMplCanvas(MyMplCanvas):
@@ -54,7 +49,7 @@ class MyDynamicMplCanvas(MyMplCanvas):
         # Build a list of 4 random integers between 0 and 10 (both inclusive)
         l = [random.randint(0, 10) for i in range(4)]
 
-        self.axes.plot([0, 1, 2, 3], l, 'r')
+        self.axes.plot(timeaxis, l, 'r')
         self.draw()
 
 class ApplicationWindow(QMainWindow):
@@ -77,9 +72,9 @@ class ApplicationWindow(QMainWindow):
         self.main_widget = QWidget(self)
 
         l = QVBoxLayout(self.main_widget)
-        sc = MyStaticMplCanvas(self.main_widget, width=5, height=4, dpi=100)
+        #sc = MyStaticMplCanvas(self.main_widget, width=5, height=4, dpi=100)
         dc = MyDynamicMplCanvas(self.main_widget, width=5, height=4, dpi=100)
-        l.addWidget(sc)
+        #l.addWidget(sc)
         l.addWidget(dc)
 
         self.main_widget.setFocus()
@@ -111,6 +106,8 @@ if __name__ == '__main__':
     aw = ApplicationWindow()
     aw.setWindowTitle("PyQt5 Matplot Example")
     aw.show()
+    #write_V = -0.5000000
+    #test_pstas_2(write_V+1.024,20,2)
     #sys.exit(qApp.exec_())
     app.exec_()
 
