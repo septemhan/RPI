@@ -6,31 +6,15 @@ import time
 import wiringpi as wp
 import spidev
 import math
-import RPi.GPIO as GPIO
-
 spi = spidev.SpiDev()
 
-# SPI GPIO Definition
+# GPIO Definition
 CsPin    = 15
 DrdyPin  = 11
 ResetPin = 12
 SPICS    = 16
 
 
-#GPIO
-LEDPin = 7
-StepPinForward=38
-StepPinBackward=40
-
-StepPinForwardB=33
-StepPinBackwardB=31
-StepBSpeed = 35
-StepSpeed=37
-
-
-#DAC address
-channel_A =  0x30
-channel_B =  0x34
 
 # Register Addresses
 REG_STATUS = 0x00
@@ -88,6 +72,11 @@ DGAIN_16  = 0x04
 DGAIN_32  = 0x05
 DGAIN_65  = 0x06
 DGAIN_128 = 0x07
+
+#switches
+LED_PIN = 33
+Dose_Pump = 31
+Sample_Pump = 29
  
 def StartSPI(): 
     spi.open(0, 0) 
@@ -100,11 +89,13 @@ def StartGPIO():
     wp.pinMode(CsPin, wp.OUTPUT)
     wp.pinMode(DrdyPin, wp.INPUT)
     wp.pinMode(ResetPin, wp.OUTPUT)
-    wp.pinMode(SPICS, wp.OUTPUT)
-    
     wp.digitalWrite(CsPin, wp.HIGH)
     wp.digitalWrite(ResetPin, wp.HIGH)
 
+    wp.pinMode(SPICS, wp.OUTPUT)
+    wp.pinMode(LED_PIN, wp.OUTPUT)
+    wp.pinMode(Dose_Pump, wp.OUTPUT)
+    wp.pinMode(Sample_Pump, wp.OUTPUT)
 
 
 def CS_1():
@@ -257,175 +248,51 @@ print("SPI setup complete")
 myID = ReadChipID()
 print("Chip ID : " + str(myID))
 
-CfgADC(DGAIN_1, DRATE_10) #sample rate
+CfgADC(DGAIN_1, DRATE_10)
 
 
 
-def read_v(_ch):
-    
-    v_results = 0
+def ISE_test(_ch):
     x=0
-    while (x<=1000): #50 is the total sample size
+    while (x<=5000):
         while (wp.digitalRead(DrdyPin)==1):
             c=1
         Adc = ISR(_ch)   #ch1 is for EC module 
         #print((Adc * 100 ) / 167 / 1000000.0)
-        ADC = ((Adc*12.000)/16777216.0)
-        print ADC
-        v_results+=ADC       
+        print ((Adc*12.000)/16777216.0)
         x+=1
-    print "The ave is ", v_results/x
+
+def test_voltage(_voltage,_duration):
+    start_time = time.time()
+    now = time.time()
+    data = Voltage_Convert(3.000,_voltage)
+    while (now-start_time<=_duration):
+        Write_DAC8532(0x30,data)
+        now = time.time()
+        print now-start_time
+    Write_DAC8532(0x30,0)
 
 
-
-def var(l):
-    s1=0
-    s2=0
-    for i in l:
-        s1+=i**2
-        s2+=i
-    return float(s1)/len(l)-(float(s2)/len(l))**2
-def clean(l,ave):
-    for i in l:
-        if abs(i-ave)/i>=0.15:
-            l.remove(i)
-
-#GPIO.setmode(GPIO.BOARD)
-wp.pinMode(StepPinForward, wp.OUTPUT)
-wp.pinMode(StepPinBackward, wp.OUTPUT)
-wp.pinMode(StepSpeed, wp.OUTPUT)
-wp.pinMode(LEDPin, wp.OUTPUT)
-wp.pinMode(StepPinForwardB, wp.OUTPUT)
-wp.pinMode(StepPinBackwardB, wp.OUTPUT)
-wp.pinMode(StepBSpeed, wp.OUTPUT)
-
-
-global p
-
-#p = GPIO.PWM(37, 5000)
-#p.start(70)
-p = wp.softPwmCreate(StepSpeed,0,100)
-
-
-def pullin(x):
-    #p.ChangeDutyCycle(70)
-    wp.softPwmWrite(StepSpeed,70)
-    wp.digitalWrite(StepPinForward, wp.HIGH)
-    print "forwarding running  motor "
-    wp.delayMicroseconds(1000000*x)
-    wp.digitalWrite(StepPinForward, wp.LOW)
-
-def pushout(x):
-    #p.ChangeDutyCycle(70)
-    wp.softPwmWrite(StepSpeed,70)
-    wp.digitalWrite(StepPinBackward, wp.HIGH)
-    print "backwarding running motor"
-    wp.delayMicroseconds(1000000*x)
-    wp.digitalWrite(StepPinBackward, wp.LOW)
-print "forward motor "
-
-def Sampleforward(x):
-    wp.digitalWrite(StepBSpeed, wp.HIGH)
-    wp.digitalWrite(StepPinForwardB, wp.HIGH)
-    print "forwarding running  motor "
-    wp.delayMicroseconds(1000000*x)
-    wp.digitalWrite(StepPinForwardB, wp.LOW)
-    wp.digitalWrite(StepBSpeed, wp.LOW)
-
-def Samplereverse(x):
-    wp.digitalWrite(StepBSpeed, wp.HIGH)
-    wp.digitalWrite(StepPinBackwardB, wp.HIGH)
-    print "backwarding running motor"
-    wp.delayMicroseconds(1000000*x)
-    wp.digitalWrite(StepPinBackwardB, wp.LOW)
-    wp.digitalWrite(StepBSpeed, wp.LOW)
-print "forward motor "
-
-def SampleFWDOn(): #grenn pump on
-
-    wp.digitalWrite(StepBSpeed, wp.HIGH)
-    wp.digitalWrite(StepPinForwardB, wp.HIGH)
+def DoseOn():
+    wp.digitalWrite(Dose_Pump, wp.HIGH)
+def DoseOff():
+    wp.digitalWrite(Dose_Pump, wp.LOW)
     
-def SmpleFWDOff(): #green pump off
-    wp.digitalWrite(StepPinForwardB, wp.LOW)
-    wp.digitalWrite(StepBSpeed, wp.LOW)
+def SampleOn():
+    wp.digitalWrite(Sample_Pump, wp.HIGH)
+def SampleOff():
+    wp.digitalWrite(Sample_Pump, wp.LOW)
 
-def LEDOn():
-    wp.digitalWrite(LEDPin, wp.HIGH)
-    #wp.delayMicroseconds(1000000*x)
-    #wp.digitalWrite(LEDPin, wp.LOW)
+def Delay(_x):
+    wp.delayMicroseconds(1000000*_x)
 
-def LEDOff():
-    wp.digitalWrite(LEDPin, wp.LOW)
+DoseOn()
+Delay(10)
+DoseOff()
     
+#wirte_V = -0.5000000
+#test_pstas_2(wirte_V+1.024,10,4)
+#test_pstas_2(wirte_V+1.024,20,2)
+#test_voltage(1.024,120)
+#ISE_test(4)
 
-def Delay(x): # unit in second
-    wp.delayMicroseconds(1000000*x)
-    
- 
-##pullin(7)
-##pushout(9)
-
-def Doit():
-    #LEDOff()
-    #flush in for 20 s to clear out
-    SampleFWDOn()
-    Delay(15)
-    #SmpleFWDOff()
-    #give drug for 2 second around 0.1 mL
-    pullin(2)
-    pushout(2)
-    #dose test sample for 0.6 mL
-    ##SampleFWDOn()
-    Delay(15)
-    SmpleFWDOff()
-    LEDOn()
-def flushcell():
-    
-    SampleFWDOn()
-    Delay(60)
-    SmpleFWDOff()
-
-def flushDose(_x):
-    for i in range(_x):
-        pullin(3)
-        pushout(2)
-    
-Doit()
-#flushcell()
-#flushDose(3)
-
-#SampleFWDOn()
-#Delay(60)
-#SmpleFWDOff()
-#LEDOn()
-#Delay(10)
-#read_v(0) #read absorption value
-LEDOff()
-
-
-'''
-wirte_V = 0.5000000
-filename = "Low_NOISE_test_1"
-tempfile = open(filename,'w')
-CfgADC(DGAIN_1, DRATE_30000)
-#for drate in [DRATE_10,DRATE_100,DRATE_500,DRATE_1000,DRATE_7500,DRATE_30000]:
-for v in [0,0.1,0.2,0.5,0.7,0.9]:
-    #CfgADC(DGAIN_1, drate)
-    wirte_V = v    
-    for i in range(10):            
-        result = []
-
-        test_pstas_2(wirte_V+1.024,10,1)
-        a = sum(result)/len(result)
-        #result = clean(result,ave)
-
-        ave = sum(result)/len(result)
-        std = math.sqrt(var(result))
-        rsd = std/ave
-
-        lineTowirte = str(i)+","+str(ave)+","+str(std)+","+str(rsd)+"\n"
-        tempfile.write(lineTowirte)
-
-tempfile.close()
-'''

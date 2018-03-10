@@ -278,7 +278,7 @@ def EC_test():
 
 def ISE_test(_ch):
     x=0
-    while (x<=500):
+    while (x<=5000):
         while (wp.digitalRead(DrdyPin)==1):
             c=1
         Adc = ISR(_ch)   #ch1 is for EC module 
@@ -379,7 +379,7 @@ def test_pstas_2(_voltage,_duration,_resolution):
 #test_pstas_2(wirte_V+1.024,10,4)
 #test_pstas_2(wirte_V+1.024,20,2)
 #test_voltage(1.024,120)
-#ISE_test(2)
+ISE_test(4)
 
 def var(l):
     s1=0
@@ -392,7 +392,7 @@ def clean(l,ave):
     for i in l:
         if abs(i-ave)/i>=0.15:
             l.remove(i)
-
+'''
 wirte_V = 0.5000000
 filename = "Low_NOISE_test_1"
 tempfile = open(filename,'w')
@@ -416,3 +416,4 @@ for v in [0,0.1,0.2,0.5,0.7,0.9]:
         tempfile.write(lineTowirte)
 
 tempfile.close()
+'''
