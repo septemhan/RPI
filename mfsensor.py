@@ -2,10 +2,13 @@ import numpy
 #from obspy.core import Trace,Stream,UTCDateTime
 import Queue
 from threading import Thread
+#from camera import camera
 import time
 import wiringpi as wp
 import spidev
 import math
+#import picamera
+
 spi = spidev.SpiDev()
 
 # GPIO Definition
@@ -77,7 +80,9 @@ DGAIN_128 = 0x07
 LED_PIN = 33
 Dose_Pump = 31
 Sample_Pump = 29
- 
+
+En_pin = 36
+Dir_pin = 38
 def StartSPI(): 
     spi.open(0, 0) 
     spi.max_speed_hz = 1920000
@@ -96,6 +101,8 @@ def StartGPIO():
     wp.pinMode(LED_PIN, wp.OUTPUT)
     wp.pinMode(Dose_Pump, wp.OUTPUT)
     wp.pinMode(Sample_Pump, wp.OUTPUT)
+    wp.pinMode(En_pin, wp.OUTPUT)
+    wp.pinMode(Dir_pin, wp.OUTPUT)
 
 
 def CS_1():
@@ -286,13 +293,48 @@ def SampleOff():
 def Delay(_x):
     wp.delayMicroseconds(1000000*_x)
 
-DoseOn()
-Delay(10)
-DoseOff()
+def trial():
     
+    SampleOn()
+    Delay(30)
+    DoseOn()
+    wp.digitalWrite(LED_PIN, wp.HIGH)
+    Delay(10)
+    DoseOff()
+    #SampleOff()
+    #wp.digitalWrite(LED_PIN, wp.LOW)
+    #Delay(60)
+    #SampleOn()
+    Delay(10)
+    SampleOff()
+    #delay(60)
+    #SampleOn()
+    #delay(10)
+    #SampleOff()
+def DoseFlush():
+    DoseOn()
+    Delay(30)
+    DoseOff()
+    
+#print '111'
+trial()
+#import time
+#DoseFlush()
+
+#
+#wp.digitalWrite(LED_PIN, wp.LOW) 
 #wirte_V = -0.5000000
 #test_pstas_2(wirte_V+1.024,10,4)
 #test_pstas_2(wirte_V+1.024,20,2)
 #test_voltage(1.024,120)
 #ISE_test(4)
+
+#wp.digitalWrite(En_pin, wp.HIGH)
+#wp.digitalWrite(LED_PIN, wp.HIGH)
+
+#Delay(60)
+#test_voltage(2.0,20)
+#wp.digitalWrite(En_pin, wp.LOW)
+#wp.digitalWrite(LED_PIN, wp.LOW)
+
 
